@@ -131,7 +131,7 @@ Max:
 <td>
 Wert2
 </td>
-
+<!-- Vergärungsgrad, Stabil seit, Fertig??-->
 </tr>
 </table>
 </div>
