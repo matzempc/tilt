@@ -41,19 +41,29 @@ if ($comment != "")
 		x: <?php echo json_encode($timepoints, JSON_PRETTY_PRINT) ?>,
 		y: <?php echo json_encode($temperatures, JSON_PRETTY_PRINT) ?>,
 		type: 'scatter',
-		name: 'Temperature'
+		name: 'Temperatur'
 	};		
 	var gravities = { 
 		x: <?php echo json_encode($timepoints, JSON_PRETTY_PRINT) ?>,
 		y: <?php echo json_encode($gravities, JSON_PRETTY_PRINT) ?>,
 		type: 'scatter',
-		name: 'Plato'
+		name: 'Extraktgehalt',
+		yaxis: 'y2'
 	};	
  	var data = [ temperatures, gravities ];	
-	console.log(temperatures);
-	console.log(gravities);
+	var layout = {
+	  title: 'Fermantationsgraph',
+	  yaxis: {title: 'Grad Celsius'},
+	  yaxis2: {
+		title: 'Grad Plato',
+		//titlefont: {color: 'rgb(148, 103, 189)'},
+		//tickfont: {color: 'rgb(148, 103, 189)'},
+		overlaying: 'y',
+		side: 'right'
+	  }
+	};
 	FERMENTER = document.getElementById('fermentation');
-	Plotly.newPlot( FERMENTER, data); 
+	Plotly.newPlot( FERMENTER, data, layout); 
 </script>
 <table WIDTH=80%>
 <tr><td>Stammwuerze:</td>
@@ -83,7 +93,6 @@ if ($comment != "")
 <td><?php echo getStopTimestamp($conn, $beer) ?></td>
 <td>Max Temperatur:</td>
 <td><?php echo getMaxTemperature($conn, $beer) ?></td>
-<!-- Vergärungsgrad, Stabil seit, Fertig??-->
 </tr>
 
 </table>
