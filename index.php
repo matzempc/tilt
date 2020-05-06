@@ -16,12 +16,8 @@ $conn = connectDB();
 if ($conn == -1){
 	exit;
 }
-$first_beer = collectBeersSelectForm($conn);
-if ($_GET['beer'] == ""){
-	$beer = $first_beer;
-} else {
-	$beer = $_GET['beer'];
-}
+$beer = collectBeersSelectForm($conn, $_GET['beer']);
+
 $query = "SELECT timestamp, gravity, temperature FROM hydrometer WHERE beer LIKE \"$beer\"";
 $result = mysqli_query($conn, $query) or die('Error on temperature, gravity graph query');
 while ($row = mysqli_fetch_assoc($result)) {

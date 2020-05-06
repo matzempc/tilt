@@ -67,19 +67,19 @@ function connectDB()
 	}
 }
 
-function collectBeersSelectForm($conn)
+function collectBeersSelectForm($conn, $selectedBeer)
 {
+	if ($selectedBeer == ""){
+		$selectedBeer = getLatestBeer($conn);
+	}
 	$query = "SELECT beer FROM hydrometer GROUP BY beer";
 	$result = mysqli_query($conn, $query) or die('Error connecting to mysql');
-	$first = 1;
 	echo "<form method=\"get\">";
 	echo "<select name=\"beer\">";
 	while ($row = mysqli_fetch_assoc($result)) {
 		$beer = $row['beer'];
-		if ($first == 1)
+		if ($selectedBeer == $beer)
 		{
-			$first = 0;
-			$first_beer = $beer;
 			echo "<option value=\"$beer\" selected> $beer";
 		} else {
 			echo "<option value=\"$beer\"> $beer";
@@ -88,7 +88,22 @@ function collectBeersSelectForm($conn)
 	echo "</select><br>";
 	echo "<p><input type = \"submit\" value = \"OK\">";
 	echo "</form>";
-	return $first_beer;
+	return $selectedBeer;
+}
+
+function getLatestBeer($conn)
+{
+	$query = "SELECT beer FROM hydrometer ORDER BY timestamp DESC LIMIT 1";
+	$result = mysqli_query($conn, $query) or die('Error on MySQL ' . __FUNCTION__);
+	$row = mysqli_fetch_assoc($result);
+	if ($row)
+	{
+		$beer = $row['beer'];
+		return $beer;
+	} else {
+		echo "No mysql result for " . __FUNCTION__;
+		return -1;
+	}
 }
 
 function getStartTimestamp($conn, $beer)
@@ -175,8 +190,7 @@ function getCurrentGravityFirstTimeStamp($conn, $beer)
 	$row = mysqli_fetch_assoc($result);
 	if ($row)
 	{
-		$currentSG = calculateSGToPlato($row['gravity']);
-		$currentSG = round($row['gravity'],2);
+		$currentSG = round($row['gravity'],3);
 	} else {
 		echo "No current gravity mysql result for " . __FUNCTION__;
 		return -1;
