@@ -17,7 +17,7 @@ $tilt = new tiltMySQL($_GET['beer']);
 if ($tilt->initialized() == 0){
 	exit;
 }
-
+$tilt->printBeersSelectForm();
 $comment = $tilt->getBeerComment();
 if ($comment != "")
 {

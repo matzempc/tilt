@@ -19,7 +19,7 @@ class tiltMySQL
 	function __construct($selectedBeer)
 	{
 		$this->conn = $this->connectDB();
-		$this->beer = $this->collectBeersSelectForm($selectedBeer);
+		$this->beer = $this->gatherBeer($selectedBeer);
 		$this->originalGravity = $this->getOriginalGravity();
 		$this->currentGravity = $this->getCurrentGravity();
 		$this->currentSG = $this->getCurrentSG();
@@ -123,18 +123,15 @@ class tiltMySQL
 		}
 	}
 
-	function collectBeersSelectForm($selectedBeer)
+	function printBeersSelectForm()
 	{
-		if ($selectedBeer == ""){
-			$selectedBeer = $this->getLatestBeer();
-		}
 		$query = "SELECT beer FROM hydrometer GROUP BY beer";
 		$result = mysqli_query($this->conn, $query) or die('Error connecting to mysql');
 		echo "<form method=\"get\">";
 		echo "<select name=\"beer\">";
 		while ($row = mysqli_fetch_assoc($result)) {
 			$beer = $row['beer'];
-			if ($selectedBeer == $beer)
+			if ($this->beer == $beer)
 			{
 				echo "<option value=\"$beer\" selected> $beer";
 			} else {
@@ -144,6 +141,13 @@ class tiltMySQL
 		echo "</select><br>";
 		echo "<p><input type = \"submit\" value = \"OK\">";
 		echo "</form>";
+	}
+	
+	function gatherBeer($selectedBeer)
+	{
+		if ($selectedBeer == ""){
+			$selectedBeer = $this->getLatestBeer();
+		}
 		return $selectedBeer;
 	}
 
