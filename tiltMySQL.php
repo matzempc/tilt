@@ -96,7 +96,11 @@ class tiltMySQL
 	
 	function initialized()
 	{
-		if ($this->currentGravity == -1)
+		if ($this->beer == -1 ||
+			$this->originalGravity == -1 ||
+			$this->currentGravity == -1 ||
+			$this->currentSG == -1 ||
+			$this->realCurrentGravity == -1)
 		{
 			return 0;
 		}
