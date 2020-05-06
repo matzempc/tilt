@@ -12,24 +12,13 @@ $temperatures = array();
 $gravities = array();
 $timepoints = array();
 
-$conn = connectDB();
-if ($conn == -1){
+$tilt = new tiltMySQL($_GET['beer']);
+
+if ($tilt->initialized() == 0){
 	exit;
 }
-$beer = collectBeersSelectForm($conn, $_GET['beer']);
 
-$query = "SELECT timestamp, gravity, temperature FROM hydrometer WHERE beer LIKE \"$beer\"";
-$result = mysqli_query($conn, $query) or die('Error on temperature, gravity graph query');
-while ($row = mysqli_fetch_assoc($result)) {
-	$temp = calculateTemperature($row['temperature']);
-	$sg = $row['gravity'];
-	$gravity = calculateSGToPlato($sg);
-	$timepoint = $row['timestamp'];
-	$temperatures[] = $temp;
-	$gravities[] = $gravity;
-	$timepoints[] = $timepoint;
-}
-$comment = getBeerComment($conn, $beer);
+$comment = $tilt->getBeerComment();
 if ($comment != "")
 {
 	echo "<br>Kommentar:" . $comment . "<br>";
@@ -38,14 +27,14 @@ if ($comment != "")
 <div id="fermentation" width=80% height=40%></div>
 <script>
 	var temperatures = { 
-		x: <?php echo json_encode($timepoints, JSON_PRETTY_PRINT) ?>,
-		y: <?php echo json_encode($temperatures, JSON_PRETTY_PRINT) ?>,
+		x: <?php echo json_encode($tilt->timepoints, JSON_PRETTY_PRINT) ?>,
+		y: <?php echo json_encode($tilt->temperatures, JSON_PRETTY_PRINT) ?>,
 		type: 'scatter',
 		name: 'Temperatur'
 	};		
 	var gravities = { 
-		x: <?php echo json_encode($timepoints, JSON_PRETTY_PRINT) ?>,
-		y: <?php echo json_encode($gravities, JSON_PRETTY_PRINT) ?>,
+		x: <?php echo json_encode($tilt->timepoints, JSON_PRETTY_PRINT) ?>,
+		y: <?php echo json_encode($tilt->gravities, JSON_PRETTY_PRINT) ?>,
 		type: 'scatter',
 		name: 'Extraktgehalt',
 		yaxis: 'y2'
@@ -67,37 +56,36 @@ if ($comment != "")
 </script>
 <table WIDTH=80%>
 <tr><td>Stammwuerze:</td>
-<td><?php echo getOriginalGravity($conn, $beer) ?></td>
+<td><?php echo $tilt->getOriginalGravity() ?></td>
 <td>Alkoholanteil (%Vol / %Gew):</td>
-<td><?php echo getAlcoholContentVol($conn, $beer) ?>% / <?php echo getAlcoholContentWeight($conn, $beer) ?>%</td>
+<td><?php echo $tilt->getAlcoholContentVol() ?>% / <?php echo $tilt->getAlcoholContentWeight() ?>%</td>
 <td>Tage:</td>
-<td><?php echo getFermentationDuration($conn, $beer) ?></td>
+<td><?php echo $tilt->getFermentationDuration() ?></td>
 <td>Durchschnittstemperatur:</td>
-<td><?php echo getAverageTemperature($conn, $beer) ?></td></tr>
+<td><?php echo $tilt->getAverageTemperature() ?></td></tr>
 
 <tr><td>scheinbarer Restextrakt:</td>
-<td><?php echo getCurrentGravity($conn, $beer) ?></td>
+<td><?php echo $tilt->getCurrentGravity() ?></td>
 <td>scheinbarer/tatsaechlicher Vergaerungsgrad:</td>
-<td><?php echo getDegreeFermentation($conn, $beer) ?>% / <?php echo getRealDegreeFermentation($conn, $beer) ?>%</td>
+<td><?php echo $tilt->getDegreeFermentation() ?>% / <?php echo $tilt->getRealDegreeFermentation() ?>%</td>
 <td>Startzeit:</td>
-<td><?php echo getStartTimestamp($conn, $beer) ?></td>
+<td><?php echo $tilt->getStartTimestamp() ?></td>
 <td>Min Temperatur:</td>
-<td><?php echo getMinTemperature($conn, $beer) ?></td></tr>
+<td><?php echo $tilt->getMinTemperature() ?></td></tr>
 
 <tr>
 <td>tatsaechlicher Restextrakt:</td>
-<td><?php echo getRealCurrentGravity($conn, $beer) ?></td>
+<td><?php echo $tilt->getRealCurrentGravity() ?></td>
 <td>Energiegehalt pro 0,5l:</td>
-<td><?php echo getCaloriesHalfLiter($conn, $beer) ?> kcal / <?php echo getKiloJouleHalfLiter($conn, $beer) ?> kJ</td>
+<td><?php echo $tilt->getCaloriesHalfLiter() ?> kcal / <?php echo $tilt->getKiloJouleHalfLiter() ?> kJ</td>
 <td>Endezeit:</td>
-<td><?php echo getStopTimestamp($conn, $beer) ?></td>
+<td><?php echo $tilt->getStopTimestamp() ?></td>
 <td>Max Temperatur:</td>
-<td><?php echo getMaxTemperature($conn, $beer) ?></td>
+<td><?php echo $tilt->getMaxTemperature() ?></td>
 </tr>
 
 </table>
-<br><h3>SG stabil seit: <?php echo getGravityStableDays($conn, $beer) ?></h3>
-<br><?php TestFunc($conn, $beer) ?>
+<br><h3>SG stabil seit: <?php echo $tilt->getGravityStableDays() ?></h3>
 </div>
 </body>
 </html>
