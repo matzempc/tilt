@@ -372,4 +372,19 @@ function getAverageTemperature($conn, $beer)
 	}
 }
 
+function getBeerComment($conn, $beer)
+{
+	$query = "SELECT comment FROM hydrometer WHERE beer LIKE \"$beer\" ORDER BY timestamp DESC LIMIT 1";
+	$result = mysqli_query($conn, $query) or die('Error on MySQL ' . __FUNCTION__);
+	$row = mysqli_fetch_assoc($result);
+	if ($row)
+	{
+		$comment = $row['comment'];
+		return $comment;
+	} else {
+		echo "No mysql result for " . __FUNCTION__;
+		return -1;
+	}
+}
+
 ?>

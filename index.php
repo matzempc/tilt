@@ -29,6 +29,11 @@ while ($row = mysqli_fetch_assoc($result)) {
 	$gravities[] = $gravity;
 	$timepoints[] = $timepoint;
 }
+$comment = getBeerComment($conn, $beer);
+if ($comment != "")
+{
+	echo "<br>Kommentar:" . $comment . "<br>";
+}
 ?>
 <div id="fermentation" width=80% height=40%></div>
 <script>
