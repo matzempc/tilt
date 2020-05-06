@@ -33,6 +33,30 @@ function calculateAlcoholContentVol($originalGravity, $currentGravity)
 	return $alcoholVol;
 }
 
+function calculateFermentationDegree($originalGravity, $currentGravity)
+{
+	$fermentationDegree = ($originalGravity - $currentGravity) * 100 / $originalGravity;
+	return $fermentationDegree;
+}
+
+function calculateRealFermentationDegree($originalGravity, $currentGravity)
+{
+	$fermentationDegree = calculateFermentationDegree($originalGravity, $currentGravity);
+	if ($fermentationDegree != - 1)
+	{
+		$realFermentationDegree = $fermentationDegree * 0.81;
+	} else {
+		return -1;
+	}
+	return $realFermentationDegree;
+}
+
+function calculateDensity($currentGravity)
+{
+	$density = 261.1 / (261.53 - $currentGravity);
+	return $density;
+}
+
 function connectDB()
 {
 	if ($conn = mysqli_connect('localhost','tilt','tilt','tilt')){
@@ -121,7 +145,6 @@ function getOriginalGravity($conn, $beer)
 	{
 		$sg = calculateSGToPlato($row['gravity']);
 		$sg = round($sg,1);
-		$sg = 12;
 		return $sg;
 	} else {
 		echo "No mysql result for " . __FUNCTION__;
@@ -141,6 +164,38 @@ function getCurrentGravity($conn, $beer)
 		return $sg;
 	} else {
 		echo "No mysql result for " . __FUNCTION__;
+		return -1;
+	}
+}
+
+function getCurrentGravityFirstTimeStamp($conn, $beer)
+{
+	$query = "SELECT gravity FROM hydrometer WHERE beer LIKE \"$beer\" ORDER BY timestamp DESC LIMIT 1";
+	$result = mysqli_query($conn, $query) or die('Error on MySQL ' . __FUNCTION__);
+	$row = mysqli_fetch_assoc($result);
+	if ($row)
+	{
+		$currentSG = calculateSGToPlato($row['gravity']);
+		$currentSG = round($row['gravity'],2);
+	} else {
+		echo "No current gravity mysql result for " . __FUNCTION__;
+		return -1;
+	}
+	if ($currentSG != -1){
+		$currentSGLow = $currentSG - 0.001;
+		$currentSGHigh = $currentSG + 0.001;
+		$query = "SELECT timestamp FROM hydrometer WHERE beer LIKE \"$beer\" AND gravity >= $currentSGLow AND gravity <= $currentSGHigh ORDER BY timestamp ASC LIMIT 1";
+		$result = mysqli_query($conn, $query) or die('Error on MySQL ' . __FUNCTION__);
+		$row = mysqli_fetch_assoc($result);
+		if ($row)
+		{
+			$timestamp = $row['timestamp'];
+			return $timestamp;
+		} else {
+			echo "No mysql result for " . __FUNCTION__;
+			return -1;
+		}
+	} else {
 		return -1;
 	}
 }
@@ -189,17 +244,70 @@ function getAlcoholContentVol($conn, $beer)
 
 function getDegreeFermentation($conn, $beer)
 {
-	return -1;
+	$originalSG = getOriginalGravity($conn, $beer);
+	$currentSG = getCurrentGravity($conn, $beer);
+	if ($originalSG != -1 && $currentSG != -1){
+		$fermentationDegree = calculateFermentationDegree($originalSG, $currentSG);
+		$fermentationDegree = round($fermentationDegree);
+		return $fermentationDegree;
+	} else {
+		echo "No gravity result for " . __FUNCTION__;
+		return -1;
+	}
 }
 
 function getRealDegreeFermentation($conn, $beer)
 {
-	return -1;
+	$originalSG = getOriginalGravity($conn, $beer);
+	$currentSG = getCurrentGravity($conn, $beer);
+	if ($originalSG != -1 && $currentSG != -1){
+		$fermentationDegree = calculateRealFermentationDegree($originalSG, $currentSG);
+		$fermentationDegree = round($fermentationDegree);
+		return $fermentationDegree;
+	} else {
+		echo "No gravity result for " . __FUNCTION__;
+		return -1;
+	}
+}
+
+function getCaloriesHalfLiter($conn, $beer)
+{
+	$originalSG = getOriginalGravity($conn, $beer);
+	$currentSG = getCurrentGravity($conn, $beer);
+	$realCurrentSG = getRealCurrentGravity($conn, $beer);
+	if ($originalSG != -1 && $currentSG != -1){
+		$density = calculateDensity($currentSG);
+		$alcohol = calculateAlcoholContentWeight($originalSG, $realCurrentSG);
+		$kcal = $density * (3.5 * $realCurrentSG + 7 * $alcohol);
+		$kcalHalfLiter = round ($kcal * 5);
+		return $kcalHalfLiter;
+	} else {
+		return -1;
+	}
+}
+
+function getKiloJouleHalfLiter($conn, $beer)
+{
+	$kcal = getCaloriesHalfLiter($conn, $beer);
+	if ($kcal != -1){
+		$kJ = round($kcal * 4.184);
+		return $kJ;
+	} else {
+		return -1;
+	}
 }
 
 function getGravityStableDays($conn, $beer)
 {
-	return -1;
+	$datetime1 = new DateTime(getCurrentGravityFirstTimeStamp($conn, $beer));
+	$datetime2 = new DateTime(getStopTimestamp($conn, $beer));
+	$interval = $datetime1->diff($datetime2);
+	if ($interval->d > 1)
+	{
+		return $interval->format('%d Tage %h Stunden');
+	} else {
+		return $interval->format('%d Tag %h Stunden');	
+	}
 }
 
 function getMinTemperature($conn, $beer)
