@@ -5,53 +5,36 @@
 </head>
 <body>
 <div align="center">
+<h1><p>Fermentation Verlauf</p></h1>
 <?php
+require_once ('tilt_include.php');
 $temperatures = array();
 $gravities = array();
 $timepoints = array();
-	
-if ($conn = mysqli_connect('localhost','tilt','tilt','tilt')){
-	$query = "SELECT beer FROM hydrometer GROUP BY beer";
-	$result = mysqli_query($conn, $query) or die('Error connecting to mysql');
-	$first = 1;
-	echo "<h1><p>Fermentation monitoring</p>";
-	echo "<form action=\"tilt.php\" method=\"get\">";
-	echo "<select name=\"beer\">";
-	while ($row = mysqli_fetch_assoc($result)) {
-		$beer = $row['beer'];
-		if ($first == 1)
-		{
-			$first = 0;
-			$first_beer = $beer;
-			echo "<option value=\"$beer\" selected> $beer";
-		} else {
-			echo "<option value=\"$beer\"> $beer";
-		}
-	}
-	echo "</select><br>";
-	echo "<p><input type = \"submit\" value = \"OK\">";
-	echo "</form>";
-	if ($_GET['beer'] == ""){
-		$query = "SELECT timestamp, gravity, temperature FROM hydrometer WHERE beer LIKE \"$first_beer\"";
-	} else {
-		$beer = $_GET['beer'];
-		$query = "SELECT timestamp, gravity, temperature FROM hydrometer WHERE beer LIKE \"$beer\"";
-	}
-	$result = mysqli_query($conn, $query) or die('Error connecting to mysql');
-	while ($row = mysqli_fetch_assoc($result)) {
-		$temp = ($row['temperature'] - 32) / 1.8;
-		$sg = $row['gravity'];
-		$gravity = (-1 * 616.868) + 
-			(1111.14 * $sg) - (630.272 * $sg * $sg) + 
-			(135.997 * $sg * $sg * $sg);
-		$timepoint = $row['timestamp'];
-		$temperatures[] = $temp;
-		$gravities[] = $gravity;
-		$timepoints[] = $timepoint;
-	}
+
+$conn = connectDB();
+if ($conn == -1){
+	exit;
+}
+$first_beer = collectBeersSelectForm($conn);
+if ($_GET['beer'] == ""){
+	$beer = $first_beer;
+} else {
+	$beer = $_GET['beer'];
+}
+$query = "SELECT timestamp, gravity, temperature FROM hydrometer WHERE beer LIKE \"$beer\"";
+$result = mysqli_query($conn, $query) or die('Error on temperature, gravity graph query');
+while ($row = mysqli_fetch_assoc($result)) {
+	$temp = calculateTemperature($row['temperature']);
+	$sg = $row['gravity'];
+	$gravity = calculateSGToPlato($sg);
+	$timepoint = $row['timestamp'];
+	$temperatures[] = $temp;
+	$gravities[] = $gravity;
+	$timepoints[] = $timepoint;
 }
 ?>
-<div id="fermentation" width=80%></div>
+<div id="fermentation" width=80% height=40%></div>
 <script>
 	var temperatures = { 
 		x: <?php echo json_encode($timepoints, JSON_PRETTY_PRINT) ?>,
@@ -62,7 +45,7 @@ if ($conn = mysqli_connect('localhost','tilt','tilt','tilt')){
 	var gravities = { 
 		x: <?php echo json_encode($timepoints, JSON_PRETTY_PRINT) ?>,
 		y: <?php echo json_encode($gravities, JSON_PRETTY_PRINT) ?>,
-		type: 'lines+markers',
+		type: 'scatter',
 		name: 'Plato'
 	};	
  	var data = [ temperatures, gravities ];	
@@ -72,68 +55,38 @@ if ($conn = mysqli_connect('localhost','tilt','tilt','tilt')){
 	Plotly.newPlot( FERMENTER, data); 
 </script>
 <table WIDTH=80%>
+<tr><td>Stammwuerze:</td>
+<td><?php echo getOriginalGravity($conn, $beer) ?></td>
+<td>Alkoholanteil (%Vol):</td>
+<td><?php echo getAlcoholContentVol($conn, $beer) ?>%</td>
+<td>Tage:</td>
+<td><?php echo getFermentationDuration($conn, $beer) ?></td>
+<td>Durchschnittstemperatur:</td>
+<td><?php echo getAverageTemperature($conn, $beer) ?></td></tr>
+
+<tr><td>scheinbarer Restextrakt:</td>
+<td><?php echo getCurrentGravity($conn, $beer) ?></td>
+<td>Alkoholanteil (%Gew):</td>
+<td><?php echo getAlcoholContentWeight($conn, $beer) ?>%</td>
+<td>Startzeit:</td>
+<td><?php echo getStartTimestamp($conn, $beer) ?></td>
+<td>Min Temperatur:</td>
+<td><?php echo getMinTemperature($conn, $beer) ?></td></tr>
+
 <tr>
-<td>
-Stammwuerze:
-</td>
-<td>
-Wert1
-</td>
-<td>
-Tage:
-</td>
-<td>
-Wert1
-</td>
-<td>
-Durchschnitt:
-</td>
-<td>
-Wert1
-</td>
-</tr>
-<tr>
-<td>
-SG:
-</td>
-<td>
-Wert2
-</td>
-<td>
-Start:
-</td>
-<td>
-Wert2
-</td>
-<td>
-Min:
-</td>
-<td>
-Wert2
-</td>
-</tr>
-<tr>
-<td>
-Alkoholanteil:
-</td>
-<td>
-Wert2
-</td>
-<td>
-Ende:
-</td>
-<td>
-Wert2
-</td>
-<td>
-Max:
-</td>
-<td>
-Wert2
-</td>
+<td>tatsaechlicher Restextrakt:</td>
+<td><?php echo getRealCurrentGravity($conn, $beer) ?></td>
+<td>scheinbarer/tatsaechlicher Vergaerungsgrad:</td>
+<td><?php echo getDegreeFermentation($conn, $beer) ?>/<?php echo getRealDegreeFermentation($conn, $beer) ?></td>
+<td>Endezeit:</td>
+<td><?php echo getStopTimestamp($conn, $beer) ?></td>
+<td>Max Temperatur:</td>
+<td><?php echo getMaxTemperature($conn, $beer) ?></td>
 <!-- Vergärungsgrad, Stabil seit, Fertig??-->
 </tr>
+
 </table>
+<br><h3>SG stabil seit: <?php echo getGravityStableDays() ?> Tagen</h3>
 </div>
 </body>
 </html>
