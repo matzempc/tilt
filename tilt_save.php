@@ -6,32 +6,6 @@
   <body>
 <div align="center">
 <?php
-/*
-$Timepoint = "43955.78502631945";
-$Temp = "70.0";
-$SG = "1.0238601134215501";
-$Beer = "Blonde Beauty,2746";
-$Color = "BLUE";
-$Comment = "";
-if ($connection = mysqli_connect('localhost','tilt','tilt','tilt')){
-    $sql = "INSERT INTO hydrometer (timepoint, temperature, gravity, beer, color, comment) "
-	 . "VALUES (\"" . 
-	 $Timepoint . "\",\"" . 
-	 $Temp . "\",\"" . 
-	 $SG . "\",\"" . 
-	 $Beer. "\",\"" . 
-	 $Color . "\",\"" . 
-	 $Comment . "\")";
-    echo $sql . "\n";
-    $result = mysqli_query($connection, $sql);
-  } else {
-	  echo "connect failed";
-	      echo "Fehler: konnte nicht mit MySQL verbinden.";
-    echo "Debug-Fehlernummer: " . mysqli_connect_errno();
-    echo "Debug-Fehlermeldung: " . mysqli_connect_error();
-    exit;
-  }
-*/
 if ($connection = mysqli_connect('localhost','tilt','tilt','tilt')){
     $sql = "INSERT INTO hydrometer (timepoint, temperature, gravity, beer, color, comment) "
 	 . "VALUES (\"" . $_POST["Timepoint"] 
