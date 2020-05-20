@@ -17,7 +17,9 @@ if ($connection = mysqli_connect('localhost','tilt','tilt','tilt')){
     echo $sql . "\n";
     $result = mysqli_query($connection, $sql);
   }
+$temperature = ($_POST["Temp"]  - 32) / 1.8;
 
+$response = file_get_contents('http://192.168.2.214:8181/test.exe?Status=dom.GetObject%28%27CUxD.CUX9002013:1.SET_TEMPERATURE%27%29.State%28%22' .$temperature . '%22%29")'); 
 ?>
 </div>
   </body>
