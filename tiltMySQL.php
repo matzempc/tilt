@@ -217,7 +217,7 @@ class tiltMySQL
 
 	function getOriginalGravity()
 	{
-		$query = "SELECT gravity FROM hydrometer WHERE beer LIKE \"$this->beer\" ORDER BY timestamp ASC LIMIT 1";
+		$query = "SELECT gravity FROM hydrometer WHERE beer LIKE \"$this->beer\" ORDER BY gravity DESC LIMIT 1";
 		$result = mysqli_query($this->conn, $query) or die('Error on MySQL ' . __FUNCTION__);
 		$row = mysqli_fetch_assoc($result);
 		if ($row)
