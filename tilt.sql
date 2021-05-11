@@ -25,7 +25,8 @@ SET time_zone = "+00:00";
 --
 -- Tabellenstruktur für Tabelle `hydrometer`
 --
-
+CREATE DATABASE `tilt`;
+USE `tilt`;
 CREATE TABLE `hydrometer` (
   `timestamp` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `timepoint` double NOT NULL,
